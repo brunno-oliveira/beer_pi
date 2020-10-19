@@ -1,7 +1,8 @@
 
 import gspread
-from oauth2client.service_account import ServiceAccountCredentials
 from datetime import datetime
+from w1thermsensor import W1ThermSensor
+from oauth2client.service_account import ServiceAccountCredentials
 
 
 class GSheet:
@@ -24,10 +25,11 @@ class GSheet:
 
     def update(
             self,
-            temp: float,
             sheet_key: str = "1x0qI0HRQstLbYiUE4fnWGu1oguK0bK9Pp3lR7UwqlWQ"):
         sheet = self.client.open_by_key(
-            sheet_key).sheet1  # Open the spreadhseet
+            sheet_key).sheet1
+
+        sensors = ['3c01d607ca23', '3c01b5568463']
 
         columns = {
             'A': 'TIMESTAMP',
@@ -37,26 +39,31 @@ class GSheet:
             'E': 'TEMPERATURA',
             'F': 'INFO'}
 
-        sensores = ['INTERNO', 'EXTERNO', 'TESTE']
+        sensores = ['INTERNO', 'EXTERNO']
 
         now = datetime.now()
-
-        print('Updating row..')
-
-        values = [
-            datetime.timestamp(now),
-            str(now.date()),
-            str(now.time()),
-            'TESTE',
-            temp,
-            'SENSOR NO ISOPOR'
-        ]
-        print('VALUES:')
-        print(values)
-        sheet.append_row(values)
+        print('Updating rows..')
+        for sensor in W1ThermSensor.get_available_sensors():
+            # Fita vermelha
+            if sensor.id == '3c01b5568463':
+                sensor_name = sensores[0]
+            else:
+                sensor_name = sensores[1]
+            info = ''
+            values = [
+                datetime.timestamp(now),
+                str(now.date()),
+                str(now.time()),
+                sensor_name,
+                sensor.get_temperature(),
+                info
+            ]
+            print('VALUES:')
+            print(values)
+            sheet.append_row(values)
 
         print('done')
 
 
 if __name__ == "__main__":
-    GSheet().update(temp=25.5)
+    GSheet().update()
